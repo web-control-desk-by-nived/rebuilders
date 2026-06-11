@@ -1,3 +1,4 @@
+const WEB3FORMS_ACCESS_KEY = 'd522d1f2-3f7e-40f6-860e-a623723f9fdc';
 
 // ══ SCROLL TO SECTION ══
 function scrollToSection(id) {
@@ -23,7 +24,7 @@ document.querySelectorAll('.reveal').forEach(el => revealObs.observe(el));
 
 // ══ NAV SCROLL ANIMATION ══
 // All sections in page order — matches nav link order exactly
-const NAV_SECTIONS = ['hero','about','process','initiatives','events','gallery','prayer','donate','join'];
+const NAV_SECTIONS = ['hero','about','process','initiatives','events','gallery','prayer','join'];
 const navLinks = Array.from(document.querySelectorAll('.nav-links a'));
 
 function getActiveIndex() {
@@ -80,17 +81,7 @@ function applyNavState(a, i, activeIdx) {
 window.addEventListener('scroll', updateNav, { passive: true });
 updateNav(); // run on load
 
-// ══ DONATE ══
-function setAmount(btn, val) {
-  document.querySelectorAll('.amount-btn').forEach(b => b.classList.remove('active'));
-  btn.classList.add('active');
-  document.getElementById('donate-amount').value = val;
-}
-function handleDonate() {
-  const amt = document.getElementById('donate-amount').value;
-  if (!amt || amt <= 0) { alert('Please enter a valid amount.'); return; }
-  alert('Thank you! ❤️\nDonation of ₹' + parseInt(amt).toLocaleString('en-IN') + ' initiated.\n(Connect your payment gateway here)');
-}
+// Donation feature disabled per client request
 
 // ══ DYNAMIC GALLERY GENERATOR & LOAD MORE ══
 const galleryFolders = [
@@ -237,15 +228,9 @@ function renderLb() {
   const label = el.getAttribute('data-label') || '';
   const title = el.getAttribute('data-title') || '';
   const imgEl = el.querySelector('img');
-  const thumb = el.querySelector('.gallery-thumb');
   const lbMedia = document.getElementById('lbMedia');
   if (imgEl) {
     lbMedia.innerHTML = `<img src="${imgEl.src}" alt="${title}" style="max-width:88vw;max-height:76vh;border-radius:18px;object-fit:contain;box-shadow:0 30px 80px rgba(0,0,0,0.7);">`;
-  } else if (thumb) {
-    const clone = thumb.cloneNode(true);
-    clone.style.cssText = 'width:min(580px,80vw);height:min(400px,58vh);border-radius:14px;';
-    lbMedia.innerHTML = '';
-    lbMedia.appendChild(clone);
   }
   document.getElementById('lbLabel').textContent = label;
   document.getElementById('lbTitle').textContent = title;
@@ -275,22 +260,69 @@ document.addEventListener('keydown', e => {
 });
 
 // ══ PRAYER FORM ══
-function submitPrayer() {
+async function submitPrayer() {
   const fname = document.getElementById('fname').value.trim();
+  const lname = document.getElementById('lname').value.trim();
+  const email = document.getElementById('email').value.trim();
   const category = document.getElementById('category').value;
+  const urgency = document.getElementById('urgency').value;
   const request = document.getElementById('request').value.trim();
   const anon = document.getElementById('anonymous').checked;
   if (!anon && !fname) { alert('Please enter your first name, or tick anonymous.'); return; }
   if (!category) { alert('Please select a prayer category.'); return; }
   if (!request) { alert('Please share your prayer request.'); return; }
-  document.getElementById('formSection').style.display = 'none';
-  document.getElementById('successMsg').style.display = 'block';
+  
+  const submitBtn = document.querySelector('.submit-btn');
+  const originalBtnText = submitBtn.innerHTML;
+
+  // Set loading state
+  submitBtn.disabled = true;
+  submitBtn.innerHTML = '🙏 &nbsp;Sending Request...';
+
+  try {
+    const response = await fetch('https://api.web3forms.com/submit', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Accept': 'application/json'
+      },
+      body: JSON.stringify({
+        access_key: WEB3FORMS_ACCESS_KEY,
+        subject: `New Prayer Request (${category})`,
+        from_name: 'Rebuilders Prayer Cell',
+        name: anon ? 'Anonymous' : `${fname} ${lname}`.trim(),
+        email: email || 'no-email@rebuilders.in',
+        category: category,
+        urgency: urgency,
+        request: request,
+        anonymous: anon ? 'Yes' : 'No'
+      })
+    });
+
+    const result = await response.json();
+
+    if (response.status === 200 && result.success) {
+      document.getElementById('formSection').style.display = 'none';
+      document.getElementById('successMsg').style.display = 'block';
+    } else {
+      throw new Error(result.message || 'Something went wrong while submitting.');
+    }
+  } catch (error) {
+    alert(`Submission failed: ${error.message}\nPlease try again.`);
+  } finally {
+    // Revert loading state
+    submitBtn.disabled = false;
+    submitBtn.innerHTML = originalBtnText;
+  }
 }
 function resetPrayerForm() {
   document.getElementById('formSection').style.display = 'block';
   document.getElementById('successMsg').style.display = 'none';
   document.getElementById('fname').value = '';
+  document.getElementById('lname').value = '';
+  document.getElementById('email').value = '';
   document.getElementById('category').value = '';
+  document.getElementById('urgency').value = 'Regular — please pray when you can';
   document.getElementById('request').value = '';
   document.getElementById('anonymous').checked = false;
 }

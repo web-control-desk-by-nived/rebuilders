@@ -414,9 +414,9 @@ footer{background:#0F0620;padding:3rem 2rem;text-align:center;border-top:1px sol
   .nav-plumbline{display:none;}
   .hamburger{display:flex;}
   .about-grid,.logo-story-grid{grid-template-columns:1fr;gap:2rem;}
-  .donate-form,.join-form{flex-direction:column;border-radius:16px;}
-  .donate-submit,.join-btn{border-radius:0 0 14px 14px;}
-  .donate-input,.join-input{border-radius:14px 14px 0 0;}
+  .join-form{flex-direction:column;border-radius:16px;}
+  .join-btn{border-radius:0 0 14px 14px;}
+  .join-input{border-radius:14px 14px 0 0;}
   .gallery-grid{columns:2 160px;}
   .lb-prev{left:-44px;}.lb-next{right:-44px;}
   .sticky-social-bar{display:none;}
